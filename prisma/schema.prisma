@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Pessoa {
+  id        String   @id @default(uuid())
+  nome      String
+  email     String   @unique
+  telefone  String
+  descricao String?  @db.Text
+
+  conhecimentos Conhecimento[]
+
+  @@map("pessoas")
+}
+
+model Conhecimento {
+  id        String   @id @default(uuid())
+  titulo    String
+  descricao String   @db.Text
+  categoria String
+  nivel     String
+  
+  pessoaId  String
+  pessoa    Pessoa   @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
+
+  @@map("conhecimentos")
+}
