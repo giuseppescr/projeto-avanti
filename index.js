@@ -1,5 +1,6 @@
-import express from 'express';
-import prisma from './PrismaClient.js';
+import "dotenv/config";
+import express from "express";
+import prisma from "./PrismaClient.js";
 
 const app = express();
 app.use(express.json());
@@ -7,19 +8,19 @@ app.use(express.json());
 // --- ROTAS DE PESSOAS ---
 
 // Listar Pessoas
-app.get('/pessoas', async (req, res) => {
+app.get("/pessoas", async (req, res) => {
   const listaPessoas = await prisma.pessoa.findMany({
-    include: { conhecimentos: true }
+    include: { conhecimentos: true },
   });
   res.json(listaPessoas);
 });
 
 // Criar Pessoa
-app.post('/pessoas', async (req, res) => {
+app.post("/pessoas", async (req, res) => {
   try {
     const { nome, email, telefone, descricao } = req.body;
     const novaPessoa = await prisma.pessoa.create({
-      data: { nome, email, telefone, descricao }
+      data: { nome, email, telefone, descricao },
     });
     res.status(201).json(novaPessoa);
   } catch (error) {
@@ -29,13 +30,13 @@ app.post('/pessoas', async (req, res) => {
 });
 
 // Atualizar Pessoa
-app.put('/pessoas/:id', async (req, res) => {
+app.put("/pessoas/:id", async (req, res) => {
   const { id } = req.params;
   const { nome, email, telefone, descricao } = req.body;
   try {
     const atualizado = await prisma.pessoa.update({
       where: { id },
-      data: { nome, email, telefone, descricao }
+      data: { nome, email, telefone, descricao },
     });
     res.json(atualizado);
   } catch (error) {
@@ -44,7 +45,7 @@ app.put('/pessoas/:id', async (req, res) => {
 });
 
 // Deletar Pessoa
-app.delete('/pessoas/:id', async (req, res) => {
+app.delete("/pessoas/:id", async (req, res) => {
   const { id } = req.params;
   try {
     await prisma.pessoa.delete({ where: { id } });
@@ -56,20 +57,37 @@ app.delete('/pessoas/:id', async (req, res) => {
 
 // --- ROTAS DE CONHECIMENTOS ---
 
-// Listar Conhecimentos
-app.get('/conhecimentos', async (req, res) => {
-  const listaConhecimentos = await prisma.conhecimento.findMany({
-    include: { pessoa: true } 
-  });
-  res.json(listaConhecimentos);
+// Listagem com filtros opcionais por Categoria e Nível
+app.get("/conhecimentos", async (req, res) => {
+  const { categoria, nivel } = req.query;
+
+  try {
+    const listaConhecimentos = await prisma.conhecimento.findMany({
+      where: {
+        AND: [
+          // Filtros dinâmicos: só são aplicados se o parâmetro existir na URL
+          categoria
+            ? { categoria: { equals: categoria, mode: "insensitive" } }
+            : {},
+          nivel ? { nivel: { equals: nivel, mode: "insensitive" } } : {},
+        ],
+      },
+      include: { pessoa: true }, // Mantém o vínculo com os dados do ofertante
+    });
+
+    res.json(listaConhecimentos);
+  } catch (error) {
+    console.error("Erro na busca de conhecimentos:", error);
+    res.status(500).json({ error: "Erro interno ao processar a busca" });
+  }
 });
 
 // Criar Conhecimento
-app.post('/conhecimentos', async (req, res) => {
+app.post("/conhecimentos", async (req, res) => {
   const { titulo, descricao, categoria, nivel, pessoaId } = req.body;
   try {
     const novoConhecimento = await prisma.conhecimento.create({
-      data: { titulo, descricao, categoria, nivel, pessoaId }
+      data: { titulo, descricao, categoria, nivel, pessoaId },
     });
     res.status(201).json(novoConhecimento);
   } catch (error) {
@@ -81,12 +99,12 @@ app.put("/conhecimentos/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { titulo, descricao, categoria, nivel, pessoaId } = req.body;
-    
+
     const atualizado = await prisma.conhecimento.update({
       where: { id },
-      data: { titulo, descricao, categoria, nivel, pessoaId }
+      data: { titulo, descricao, categoria, nivel, pessoaId },
     });
-    
+
     res.json(atualizado);
   } catch (error) {
     console.log(error);
@@ -95,7 +113,7 @@ app.put("/conhecimentos/:id", async (req, res) => {
 });
 
 // Deletar Conhecimento
-app.delete('/conhecimentos/:id', async (req, res) => {
+app.delete("/conhecimentos/:id", async (req, res) => {
   const { id } = req.params;
   try {
     await prisma.conhecimento.delete({ where: { id } });
@@ -107,5 +125,5 @@ app.delete('/conhecimentos/:id', async (req, res) => {
 
 // Iniciar Servidor
 app.listen(3000, () => {
-  console.log('Servidor rodando em http://localhost:3000');
+  console.log("Servidor rodando em http://localhost:3000");
 });
