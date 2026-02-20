@@ -19,15 +19,17 @@ app.get("/pessoas", async (req, res) => {
 app.post("/pessoas", async (req, res) => {
   try {
     const { nome, email, telefone, descricao } = req.body;
+
     const novaPessoa = await prisma.pessoa.create({
       data: { nome, email, telefone, descricao },
     });
+
     res.status(201).json(novaPessoa);
   } catch (error) {
-    // Tratamento para o erro de campo único (@unique) do Prisma
     if (error.code === "P2002") {
       return res.status(400).json({ error: "Este e-mail já está cadastrado." });
     }
+
     console.log(error);
     res.status(400).json({ error: "Erro ao criar pessoa" });
   }
@@ -37,11 +39,13 @@ app.post("/pessoas", async (req, res) => {
 app.put("/pessoas/:id", async (req, res) => {
   const { id } = req.params;
   const { nome, email, telefone, descricao } = req.body;
+
   try {
     const atualizado = await prisma.pessoa.update({
       where: { id },
       data: { nome, email, telefone, descricao },
     });
+
     res.json(atualizado);
   } catch (error) {
     res.status(404).json({ error: "Pessoa não encontrada" });
@@ -51,6 +55,7 @@ app.put("/pessoas/:id", async (req, res) => {
 // Deletar Pessoa
 app.delete("/pessoas/:id", async (req, res) => {
   const { id } = req.params;
+
   try {
     await prisma.pessoa.delete({ where: { id } });
     res.status(204).send();
@@ -82,7 +87,7 @@ app.get("/conhecimentos", async (req, res) => {
         ],
       },
       include: {
-        pessoa: true, // Retorna os dados de contato do responsável
+        pessoa: true,
       },
     });
 
@@ -92,25 +97,49 @@ app.get("/conhecimentos", async (req, res) => {
   }
 });
 
+// ROTA DE DETALHES (Buscar conhecimento por ID)
+app.get("/conhecimentos/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const conhecimento = await prisma.conhecimento.findUnique({
+      where: { id },
+      include: { pessoa: true },
+    });
+
+    if (!conhecimento) {
+      return res.status(404).json({ error: "Conhecimento não encontrado" });
+    }
+
+    res.json(conhecimento);
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao buscar detalhes do conhecimento" });
+  }
+});
+
 // Criar Conhecimento
 app.post("/conhecimentos", async (req, res) => {
   const { titulo, descricao, categoria, nivel, pessoaId } = req.body;
+
   try {
     const novoConhecimento = await prisma.conhecimento.create({
       data: { titulo, descricao, categoria, nivel, pessoaId },
     });
+
     res.status(201).json(novoConhecimento);
   } catch (error) {
-    res.status(400).json({ error: "Erro ao criar (Verifique o ID da pessoa)" });
+    res.status(400).json({
+      error: "Erro ao criar (Verifique o ID da pessoa)",
+    });
   }
 });
 
 // Atualizar Conhecimento
 app.put("/conhecimentos/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { titulo, descricao, categoria, nivel, pessoaId } = req.body;
+  const { id } = req.params;
+  const { titulo, descricao, categoria, nivel, pessoaId } = req.body;
 
+  try {
     const atualizado = await prisma.conhecimento.update({
       where: { id },
       data: { titulo, descricao, categoria, nivel, pessoaId },
@@ -118,7 +147,6 @@ app.put("/conhecimentos/:id", async (req, res) => {
 
     res.json(atualizado);
   } catch (error) {
-    console.log(error);
     res.status(400).json({ error: "Erro ao atualizar conhecimento" });
   }
 });
@@ -126,6 +154,7 @@ app.put("/conhecimentos/:id", async (req, res) => {
 // Deletar Conhecimento
 app.delete("/conhecimentos/:id", async (req, res) => {
   const { id } = req.params;
+
   try {
     await prisma.conhecimento.delete({ where: { id } });
     res.status(204).send();
