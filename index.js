@@ -15,7 +15,7 @@ app.get("/pessoas", async (req, res) => {
   res.json(listaPessoas);
 });
 
-// Criar Pessoa
+// Criar Pessoa com tratamento de e-mail duplicado
 app.post("/pessoas", async (req, res) => {
   try {
     const { nome, email, telefone, descricao } = req.body;
@@ -24,6 +24,10 @@ app.post("/pessoas", async (req, res) => {
     });
     res.status(201).json(novaPessoa);
   } catch (error) {
+    // Tratamento para o erro de campo único (@unique) do Prisma
+    if (error.code === "P2002") {
+      return res.status(400).json({ error: "Este e-mail já está cadastrado." });
+    }
     console.log(error);
     res.status(400).json({ error: "Erro ao criar pessoa" });
   }
@@ -57,28 +61,34 @@ app.delete("/pessoas/:id", async (req, res) => {
 
 // --- ROTAS DE CONHECIMENTOS ---
 
-// Listagem com filtros opcionais por Categoria e Nível
+// Listagem com Filtros Avançados (Categoria, Nível e Busca Textual)
 app.get("/conhecimentos", async (req, res) => {
-  const { categoria, nivel } = req.query;
+  const { categoria, nivel, search } = req.query;
 
   try {
-    const listaConhecimentos = await prisma.conhecimento.findMany({
+    const conhecimentos = await prisma.conhecimento.findMany({
       where: {
         AND: [
-          // Filtros dinâmicos: só são aplicados se o parâmetro existir na URL
-          categoria
-            ? { categoria: { equals: categoria, mode: "insensitive" } }
+          categoria ? { categoria } : {},
+          nivel ? { nivel } : {},
+          search
+            ? {
+                OR: [
+                  { titulo: { contains: search, mode: "insensitive" } },
+                  { descricao: { contains: search, mode: "insensitive" } },
+                ],
+              }
             : {},
-          nivel ? { nivel: { equals: nivel, mode: "insensitive" } } : {},
         ],
       },
-      include: { pessoa: true }, // Mantém o vínculo com os dados do ofertante
+      include: {
+        pessoa: true, // Retorna os dados de contato do responsável
+      },
     });
 
-    res.json(listaConhecimentos);
+    res.json(conhecimentos);
   } catch (error) {
-    console.error("Erro na busca de conhecimentos:", error);
-    res.status(500).json({ error: "Erro interno ao processar a busca" });
+    res.status(500).json({ error: "Erro ao buscar conhecimentos" });
   }
 });
 
@@ -95,6 +105,7 @@ app.post("/conhecimentos", async (req, res) => {
   }
 });
 
+// Atualizar Conhecimento
 app.put("/conhecimentos/:id", async (req, res) => {
   try {
     const { id } = req.params;
