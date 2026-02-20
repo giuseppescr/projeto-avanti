@@ -12,7 +12,7 @@ model Pessoa {
   email     String   @unique
   telefone  String
   descricao String?  @db.Text
-
+  senhaHash     String
   conhecimentos Conhecimento[]
 
   @@map("pessoas")
