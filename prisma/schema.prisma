@@ -11,6 +11,7 @@ model Pessoa {
   nome      String
   email     String   @unique
   telefone  String
+  senha     String
   descricao String?  @db.Text
 
   conhecimentos Conhecimento[]
