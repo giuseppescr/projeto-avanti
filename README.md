@@ -173,12 +173,6 @@ http://localhost:3000
 
 ---
 
-# 🔎 Filtros Disponíveis
-
-
-
----
-
 # ✅ Funcionalidades Implementadas
 
 * ✔ CRUD completo de Pessoas
@@ -196,15 +190,28 @@ http://localhost:3000
 
 ```
 projeto-avanti/
-│
-├── prisma/
-│   ├── schema.prisma
-│   └── migrations/
-│
-├── index.js
-├── prisma.config.js
-├── package.json
-└── .env
+├── prisma/                 # Configurações do Banco de Dados (Prisma)
+│   ├── migrations/         # Histórico de migrações do banco
+│   └── schema.prisma       # Definição dos modelos (Pessoa, Conhecimento)
+├── src/                    # Código fonte da aplicação
+│   ├── controllers/        # Lógica de negócio e manipulação de requisições
+│   │   ├── auth.controller.js          # Login e geração de tokens
+│   │   ├── pessoa.controller.js        # CRUD de usuários
+│   │   └── conhecimento.controller.js  # CRUD e filtros de conhecimentos
+│   ├── database/           # Instância e configuração do cliente do banco
+│   │   └── PrismaClient.js
+│   ├── middlewares/        # Funções que interceptam requisições (Segurança)
+│   │   └── authenticate.js # Validação do token JWT
+│   ├── routes/             # Definição dos endpoints da API
+│   │   ├── index.js        # Agregador central de rotas
+│   │   ├── auth.routes.js  # Rotas de autenticação
+│   │   ├── pessoa.routes.js # Rotas de usuários
+│   │   └── conhecimento.routes.js # Rotas de conhecimentos
+│   ├── app.js              # Configuração do Express e middlewares globais
+│   └── server.js           # Ponto de entrada (inicialização do servidor)
+├── .env                    # Variáveis de ambiente (SECRET_KEY, DATABASE_URL)
+├── package.json            # Dependências e scripts do projeto
+└── README.md               # Documentação principal
 ```
 
 ---
