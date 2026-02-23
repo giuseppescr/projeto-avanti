@@ -9,7 +9,7 @@ export async function listarPessoas(req, res) {
   res.json(listaPessoas);
 }
 
-// Criar Pessoa
+// Criar Pessoa 
 export async function criarPessoa(req, res) {
   try {
     const { nome, email, telefone, descricao, senha } = req.body;
