@@ -69,15 +69,26 @@ export async function criarConhecimento(req, res) {
   }
 }
 
-// Atualizar conhecimento
+// Atualizar conhecimento (PROTEGIDO)
 export async function atualizarConhecimento(req, res) {
   const { id } = req.params;
-  const { titulo, descricao, categoria, nivel, pessoaId } = req.body;
+  const { titulo, descricao, categoria, nivel } = req.body; // Removemos o pessoaId daqui
 
   try {
+    const conhecimento = await prisma.conhecimento.findUnique({ where: { id } });
+    
+    if (!conhecimento) return res.status(404).json({ error: "Conhecimento não encontrado" });
+    
+    // Verificação de segurança: O dono da oferta é o mesmo usuário do Token?
+    if (conhecimento.pessoaId !== req.pessoaId) {
+      return res.status(403).json({ error: "Sem permissão para editar esta oferta" });
+    }
+
+    // Atualiza apenas os dados permitidos
     const atualizado = await prisma.conhecimento.update({
       where: { id },
-      data: { titulo, descricao, categoria, nivel, pessoaId },
+      data: { titulo, descricao, categoria, nivel }, 
+      
     });
 
     res.json(atualizado);
@@ -86,11 +97,20 @@ export async function atualizarConhecimento(req, res) {
   }
 }
 
-// Deletar conhecimento
+// Deletar conhecimento (PROTEGIDO)
 export async function deletarConhecimento(req, res) {
   const { id } = req.params;
 
   try {
+    const conhecimento = await prisma.conhecimento.findUnique({ where: { id } });
+    
+    if (!conhecimento) return res.status(404).json({ error: "Conhecimento não encontrado" });
+
+    // Verificação de segurança: O dono da oferta é o mesmo usuário do Token?
+    if (conhecimento.pessoaId !== req.pessoaId) {
+      return res.status(403).json({ error: "Sem permissão para deletar esta oferta" });
+    }
+
     await prisma.conhecimento.delete({ where: { id } });
     res.status(204).send();
   } catch (error) {

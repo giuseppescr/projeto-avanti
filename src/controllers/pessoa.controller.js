@@ -26,7 +26,11 @@ export async function criarPessoa(req, res) {
       },
     });
 
-    res.status(201).json(novaPessoa);
+    // Remove a senha antes de enviar a resposta
+    const { senha: _, ...pessoaSemSenha } = novaPessoa;
+
+    res.status(201).json(pessoaSemSenha);
+
   } catch (error) {
     if (error.code === "P2002") {
       return res.status(400).json({ error: "Este e-mail já está cadastrado." });
